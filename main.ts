@@ -10,14 +10,29 @@ input.onButtonPressed(Button.A, function () {
     vx = vy
     vy = temp
 })
+function tiltControl () {
+    if (Math.abs(input.rotation(Rotation.Pitch)) >= Math.abs(input.rotation(Rotation.Roll))) {
+        if (vy != 0) return
+        vx = 0
+        if (input.rotation(Rotation.Pitch) >= 0) {
+            vy = 1
+        } else {
+            vy = -1
+        }
+    } else {
+        if (vx != 0) return
+        vy = 0
+        if (input.rotation(Rotation.Roll) >= 0) {
+            vx = 1
+        } else {
+            vx = -1
+        }
+    }
+}
 function drawFood () {
     led.plotBrightness(fx, fy, 25)
 }
 function moveSnake () {
-    basic.clearScreen()
-    for (let value of segments) {
-        led.plot(value % 5, Math.idiv(value, 5))
-    }
     segments.push((segments[length - 1] + vx + 5) % 5 + 5 * (vy + Math.idiv(segments[length - 1], 5) + 5) % 25)
     if (segments[length] == fx + 5 * fy) {
         spawnFood()
@@ -28,7 +43,13 @@ function moveSnake () {
     if (isColliding()) {
         gameOver = true
         music._playDefaultBackground(music.builtInPlayableMelody(Melodies.PowerDown), music.PlaybackMode.UntilDone)
+        reset()
     }
+    basic.clearScreen()
+    for (let value of segments) {
+        led.plotBrightness(value % 5, Math.idiv(value, 5), 5)
+    }
+    led.plot(segments[length - 1] % 5, Math.idiv(segments[length - 1], 5))
 }
 input.onButtonPressed(Button.B, function () {
     if (vy != 0) {
@@ -51,6 +72,7 @@ input.onLogoEvent(TouchButtonEvent.Pressed, function () {
 })
 function reset () {
     length = 3
+    vx = 0
     vy = 1
     segments = [0, 5, 10]
     spawnFood()
@@ -72,6 +94,7 @@ segments = [0, 5, 10]
 spawnFood()
 basic.forever(function () {
     if (!(gameOver)) {
+        tiltControl()
         moveSnake()
         drawFood()
     } else {
